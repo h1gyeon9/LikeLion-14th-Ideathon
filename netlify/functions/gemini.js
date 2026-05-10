@@ -1,10 +1,12 @@
+// netlify/functions/gemini.js
+ 
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
-
+ 
   const { personaDescription } = JSON.parse(event.body);
-
+ 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
@@ -17,7 +19,7 @@ export async function handler(event) {
             parts: [
               {
                 text: `당신은 다음과 같은 페르소나로 독서 토론에 참여합니다: "${personaDescription}"
-
+ 
 독서 토론 채팅방에 처음 입장해 토론을 시작하는 첫 마디를 합니다.
 규칙:
 - 반드시 페르소나의 성격과 말투를 유지할 것
@@ -32,14 +34,19 @@ export async function handler(event) {
       }),
     }
   );
-
+ 
   const data = await res.json();
+ 
+  // 디버그용 로그
+  console.log("Gemini status:", res.status);
+  console.log("Gemini response:", JSON.stringify(data));
+ 
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
+ 
   if (!text) {
     return { statusCode: 500, body: JSON.stringify({ error: "Gemini 응답 오류" }) };
   }
-
+ 
   return {
     statusCode: 200,
     headers: { "Content-Type": "application/json" },
